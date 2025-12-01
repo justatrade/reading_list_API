@@ -10,7 +10,7 @@ services:
       - pg_data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME" ]
+      test: [ "CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -20,9 +20,14 @@ services:
     container_name: reading_list_api
     env_file:
       - .env
+    volumes:
+      - ./migrations:/app/migrations
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "8000:8000"
     restart: unless-stopped
+
+volumes:
+  pg_data:

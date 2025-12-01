@@ -26,8 +26,6 @@ class DatabaseConnection:
                 settings.database.url,
                 echo=settings.app.debug,
                 pool_pre_ping=True,
-                pool_size=10,
-                max_overflow=20
             )
             logger.info("Database engine created")
         return cls._engine
@@ -42,19 +40,6 @@ class DatabaseConnection:
             )
             logger.info("Session factory created")
         return cls._session_factory
-
-    @classmethod
-    async def create_tables(cls):
-        engine = cls.get_engine()
-        async with engine.begin() as conn:
-            await conn.run_sync(BaseModel.metadata.create_all)
-        logger.info("Database tables created")
-
-    @classmethod
-    async def close(cls):
-        if cls._engine:
-            await cls._engine.dispose()
-            logger.info("Database connection closed")
 
     @classmethod
     @asynccontextmanager

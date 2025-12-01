@@ -1,7 +1,7 @@
 import enum
 import re
-from datetime import datetime
-from typing import Optional
+from datetime import datetime, timezone
+from typing import List, Optional
 
 from sqlalchemy import (
     Column,
@@ -13,6 +13,7 @@ from sqlalchemy import (
     String,
     Table,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.orm import mapped_column, relationship, Mapped
@@ -52,35 +53,31 @@ class PriorityEnum(str, enum.Enum):
 
 
 item_tag = Table(
-    name="item_tag",
-    metadata=BaseModel.metadata,
-    args=[
-        Column(
-            __name_pos="item_id",
-            args=[ForeignKey(column="items.id", ondelete="CASCADE")],
-            primary_key=True,
-        ),
-        Column(
-            __name_pos="tag_id",
-            args=[ForeignKey(column="tags.id", ondelete="CASCADE")],
-            primary_key=True),
-    ],
+    "item_tag",
+    BaseModel.metadata,
+    Column(
+        "item_id",
+        ForeignKey(column="items.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "tag_id",
+        ForeignKey(column="tags.id", ondelete="CASCADE"),
+        primary_key=True),
 )
 
 
-class User(BaseModel):
+class Users(BaseModel):
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     display_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), onupdate=datetime.now()
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    items: Mapped[List["Items"]] = relationship(
+        "Items", back_populates="users", cascade="all, delete-orphan"
     )
 
-    items = relationship(
-        "Item", back_populates="user", cascade="all, delete-orphan"
-    )
 
-
-class Tag(BaseModel):
+class Tags(BaseModel):
     user_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -88,23 +85,34 @@ class Tag(BaseModel):
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
 
-    user = relationship("User", backref="tags")
-    items = relationship("Item", secondary=item_tag, back_populates="tags")
+    users = relationship("Users", backref="tags")
+    items = relationship("Items", secondary=item_tag, back_populates="tags")
+    __table_args__ = (
+        UniqueConstraint("user_id", "name", name="unique_user_tags"),
+    )
 
 
-class Item(BaseModel):
+class Items(BaseModel):
     user_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
     )
     title: Mapped[str] = mapped_column(String, nullable=False)
-    kind = Column(Enum(KindEnum), nullable=False)
-    status = Column(Enum(StatusEnum), nullable=False, default=StatusEnum.planned)
-    priority = Column(Enum(PriorityEnum), nullable=False, default=PriorityEnum.normal)
-    notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, onupdate=datetime.now())
-    updated_at = Column(DateTime, onupdate=datetime.now())
+    kind: Mapped[KindEnum] = mapped_column(Enum(KindEnum), nullable=False)
+    status: Mapped[StatusEnum] = mapped_column(
+        Enum(StatusEnum), nullable=False, default=StatusEnum.planned
+    )
+    priority: Mapped[PriorityEnum] = mapped_column(
+        Enum(PriorityEnum), nullable=False, default=PriorityEnum.normal
+    )
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), onupdate=datetime.now(timezone.utc)
+    )
 
-    user = relationship("User", back_populates="items")
-    tags = relationship("Tag", secondary=item_tag, back_populates="items")
+    users: Mapped["Users"] = relationship("Users", back_populates="items")
+    tags: Mapped[List["Tags"]] = relationship(
+        "Tags", secondary=item_tag, back_populates="items"
+    )

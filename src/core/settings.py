@@ -14,9 +14,9 @@ if env_file.exists():
 class DatabaseSettings(BaseSettings):
     db_host: str = Field(..., alias="PGHOST")
     db_port: int = Field(..., alias="PGPORT")
-    postgres_db: str = Field(..., alias="PGDATABASE")
-    postgres_user: str = Field(..., alias="PGUSER")
-    postgres_password: str = Field(..., alias="PGPASSWORD")
+    postgres_db: str = Field(..., alias="POSTGRES_DB")
+    postgres_user: str = Field(..., alias="POSTGRES_USER")
+    postgres_password: str = Field(..., alias="POSTGRES_PASSWORD")
 
     @property
     def url(self) -> str:
@@ -28,8 +28,9 @@ class DatabaseSettings(BaseSettings):
 
 
 class AppSettings(BaseSettings):
-    debug: bool = Field(False, alias="DEBUG")
     log_level: str = Field("INFO", alias="LOG_LEVEL")
+    log_dir: str = Field(..., alias="LOG_DIR")
+    debug: bool = Field(False, alias="DEBUG")
 
 
 class Settings:
