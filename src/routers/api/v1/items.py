@@ -33,7 +33,6 @@ async def get_item(
     return item
 
 
-# List with filters
 @router.get("/", response_model=list[ItemOut])
 async def list_items(
     session: AsyncSession = Depends(get_db_session),
@@ -58,13 +57,12 @@ async def list_items(
         title_substring=title,
         limit=limit,
         offset=offset,
-        sort_by=order_by,
+        sort_by=order_by.value,
         sort_dir=direction,
     )
     return items
 
 
-# Update
 @router.patch("/{item_id}", response_model=ItemOut)
 async def update_item(
     item_id: int,
@@ -77,11 +75,12 @@ async def update_item(
     if not item:
         raise HTTPException(404, "Item not found")
 
-    item = await repo.update(item, payload.model_dump(exclude_unset=True))
+    item_data = payload.model_dump(exclude_unset=True)
+    tag_ids = item_data.pop("tag_ids", None)
+    item = await repo.update(item_id, user_id, item_data, tag_ids=tag_ids)
     return item
 
 
-# Delete
 @router.delete("/{item_id}", status_code=204)
 async def delete_item(
     item_id: int,

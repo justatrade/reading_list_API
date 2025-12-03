@@ -9,34 +9,34 @@ from src.schemas.users import UserCreate, UserUpdate
 
 class UserRepository:
     @staticmethod
-    async def get_by_id(db: AsyncSession, user_id: int) -> Users | None:
-        result = await db.execute(select(Users).where(Users.id == user_id))
+    async def get_by_id(session: AsyncSession, user_id: int) -> Users | None:
+        result = await session.execute(select(Users).where(Users.id == user_id))
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_all(db: AsyncSession) -> list[Users]:
-        result = await db.execute(select(Users))
+    async def get_all(session: AsyncSession) -> list[Users]:
+        result = await session.execute(select(Users))
         return list(result.scalars().all())
     
     @staticmethod
-    async def create(db: AsyncSession, data: UserCreate) -> Users:
+    async def create(session: AsyncSession, data: UserCreate) -> Users:
         user: Users = Users(
             email=data.email,
             display_name=data.display_name,
             created_at=datetime.now(),
         )
-        db.add(user)
-        await db.flush()
+        session.add(user)
+        await session.flush()
         return user
 
     @staticmethod
-    async def update(db: AsyncSession, user: Users, data: UserUpdate) -> Users:
+    async def update(session: AsyncSession, user: Users, data: UserUpdate) -> Users:
         for field, value in data.model_dump(exclude_unset=True).items():
             setattr(user, field, value)
-        await db.flush()
-        await db.refresh(user)
+        await session.flush()
+        await session.refresh(user)
         return user
 
     @staticmethod
-    async def delete(db: AsyncSession, user: Users) -> None:
-        await db.delete(user)
+    async def delete(session: AsyncSession, user: Users) -> None:
+        await session.delete(user)

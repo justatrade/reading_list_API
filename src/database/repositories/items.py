@@ -21,7 +21,7 @@ class ItemRepository(BaseRepository):
             .options(joinedload(Items.tags))
         )
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        return result.unique().scalar_one_or_none()
 
     async def list(
         self,
@@ -75,7 +75,13 @@ class ItemRepository(BaseRepository):
         result = await self.session.execute(stmt)
         return result.scalars().unique().all()
 
-    async def update(self, item_id: int, user_id: int, data) -> Optional[Items]:
+    async def update(
+            self,
+            item_id: int,
+            user_id: int,
+            data: dict,
+            tag_ids: Optional[List[int]] = None,
+    ) -> Optional[Items]:
         stmt = (
             update(Items)
             .where(Items.id == item_id, Items.user_id == user_id)
@@ -83,7 +89,26 @@ class ItemRepository(BaseRepository):
             .returning(Items)
         )
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        item = result.scalar_one_or_none()
+
+        if not item:
+            return None
+
+        if tag_ids is not None:
+            from sqlalchemy import select
+            from src.database.models import Tags
+
+            tags_stmt = (
+                select(Tags)
+                .where(Tags.id.in_(tag_ids), Tags.user_id == user_id)
+            )
+            tags_result = await self.session.execute(tags_stmt)
+            tags = tags_result.scalars().all()
+            item.tags = tags
+
+        await self.session.flush()
+        await self.session.refresh(item)
+        return item
 
     async def delete(self, item_id: int, user_id: int) -> bool:
         stmt = delete(Items).where(

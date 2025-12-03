@@ -5,6 +5,7 @@ from typing import Optional, List
 from pydantic import BaseModel
 
 from src.database.models import Items, KindEnum, PriorityEnum, StatusEnum
+from src.schemas.tags import TagOut
 
 
 class ItemCreate(BaseModel):
@@ -34,7 +35,7 @@ class ItemOut(BaseModel):
     notes: Optional[str]
     created_at: datetime
     updated_at: Optional[datetime]
-    tags: List[str]
+    tags: List[TagOut]
 
     class Config:
         from_attributes = True
