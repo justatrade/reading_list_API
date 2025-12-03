@@ -14,7 +14,9 @@
 
 ## Запуск проекта
 
-Требования: установлен *Docker* и *Docker Compose*.
+Требования: 
+- установлен *Docker* и *Docker Compose*.
+- на базе .env_example, создан файл .env в корне проекта
 
 ```bash
 docker compose up -d --build

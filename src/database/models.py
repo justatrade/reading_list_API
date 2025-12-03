@@ -75,9 +75,6 @@ class Users(BaseModel):
     items: Mapped[List["Items"]] = relationship(
         "Items", back_populates="users", cascade="all, delete-orphan"
     )
-    #
-    # def __repr__(self):
-    #     return self.display_name
 
 
 class Tags(BaseModel):
@@ -93,9 +90,6 @@ class Tags(BaseModel):
     __table_args__ = (
         UniqueConstraint("user_id", "name", name="unique_user_tags"),
     )
-    #
-    # def __repr__(self):
-    #     return self.name
 
 
 class Items(BaseModel):
@@ -122,6 +116,3 @@ class Items(BaseModel):
     tags: Mapped[List["Tags"]] = relationship(
         "Tags", secondary=item_tag, back_populates="items"
     )
-    #
-    # def __repr__(self):
-    #     return self.title
