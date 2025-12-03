@@ -36,7 +36,7 @@ class DatabaseConnection:
             cls._session_factory = async_sessionmaker(
                 bind=cls.get_engine(),
                 class_=AsyncSession,
-                expire_on_commit=False
+                expire_on_commit=True
             )
             logger.info("Session factory created")
         return cls._session_factory
